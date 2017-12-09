@@ -33,11 +33,24 @@ int main( int argc, char *argv[] ) {
   }
 
   else if (strcmp(argv[1], "-v")) {
-
+    int sd = semget(KEY, 0, 0644);
+    int val = semctl(sd, 0, GETVAL);
+    if (val == -1) {
+      printf("Error getting semaphore value: %s\n", strerror(errno));
+    } else {
+      printf("[%d] Semaphore value: %d\n", sd, val);
+    }
   }
 
   else if (strcmp(argv[1], "-r")) {
-
+    int sd = semget(KEY, 0, 0644);
+    int val = semctl(sd, 0,  IPC_RMID);
+    if (val == -1) {
+      printf("Error: %s\n", strerror(errno));
+    }
+    else {
+      printf("[%d] Semaphore removed %d\n", sd, val);
+    }
   }
 
   return 0;
