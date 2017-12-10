@@ -7,7 +7,8 @@
 #include <sys/types.h>
 #include <shm.h>
 #include <sem.h>
-#define KEY 101
+
+#define KEY 1024
 
 int readLastLine()
 {

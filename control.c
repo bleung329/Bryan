@@ -16,12 +16,12 @@ int main( int argc, char *argv[] ) {
     unsigned short *array;
   } data;
 
-  if (argc != 1) {
+  if (argc != 2) {
     printf("Invalid arguments.\n");
     return 0;
   }
 
-  if (strcmp(argv[1], "-c")) {
+  if (!(strcmp(argv[1], "-c")) {
     int sd = semget(KEY, 1, IPC_CREAT | IPC_EXCL | 0644);
     if (sd == -1) {
       printf("Error creating semaphore: %s", strerror(errno));
@@ -32,7 +32,7 @@ int main( int argc, char *argv[] ) {
     printf("[%d] Created semaphore!", sd);
   }
 
-  else if (strcmp(argv[1], "-v")) {
+  else if (!(strcmp(argv[1], "-v"))) {
     int sd = semget(KEY, 0, 0644);
     int val = semctl(sd, 0, GETVAL);
     if (val == -1) {
@@ -42,7 +42,7 @@ int main( int argc, char *argv[] ) {
     }
   }
 
-  else if (strcmp(argv[1], "-r")) {
+  else if (!(strcmp(argv[1], "-r"))) {
     int sd = semget(KEY, 0, 0644);
     int val = semctl(sd, 0,  IPC_RMID);
     if (val == -1) {
