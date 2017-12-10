@@ -21,7 +21,7 @@ int main( int argc, char *argv[] ) {
     return 0;
   }
 
-  if (!(strcmp(argv[1], "-c")) {
+  if (!(strcmp(argv[1], "-c"))) {
     int sd = semget(KEY, 1, IPC_CREAT | IPC_EXCL | 0644);
     if (sd == -1) {
       printf("Error creating semaphore: %s", strerror(errno));
