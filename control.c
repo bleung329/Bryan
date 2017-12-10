@@ -29,7 +29,7 @@ int main( int argc, char *argv[] ) {
     }
     data.val = 1;
     semctl(sd, 0, SETVAL, data.val);
-    printf("[%d] Created semaphore!", sd);
+    printf("[%d] Created semaphore!\n", sd);
   }
 
   else if (!(strcmp(argv[1], "-v"))) {
