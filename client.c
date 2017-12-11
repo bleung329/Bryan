@@ -1,3 +1,7 @@
+/*
+Brian Leung & Ryan Siu
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
