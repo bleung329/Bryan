@@ -1,84 +1,69 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
+#include <fcntl.h>
 #include <sys/shm.h>
-#include <sys/sem.h>
 #include <sys/ipc.h>
-#include <sys/types.h>
+#include <sys/sem.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define KEY 1024
 
-int readLastLine()
-{
-	int shmloc = shmget(KEY,sizeof(int),0600);
-	int * lineSize = shmat(shmloc,NULL,0);
-	char * line = malloc(256);
-	printf("%ld bytes\n",(long)lineSize);
-	int fd = open("story.txt",O_RDWR);
-	printf("Still going\n");
-	lseek(fd, -1*(long int)lineSize, SEEK_END);
-	read(fd, line, (long unsigned int)lineSize);
-	printf("%s\n",line);
-	shmdt(lineSize);
-	free(line);
-	return 0;
-}
-int writeLastLine(char* str)
-{
-	int shmloc = shmget(KEY,sizeof(int),0600);
-	int * lineSize = shmat(shmloc,0,0);
-	int hope = sizeof(str);
-	lineSize = &hope;
-	int fd = open("story.txt",O_APPEND);
-	write(fd,str,sizeof(str));
-	shmdt(lineSize);
-	return 0;
-}
+int main() {
+  int sd = semget(KEY, 1, 0644);
+  if (sd == -1) {
+    printf("Error getting semaphore: %s", strerror(errno));
+    return -1;
+  }
 
+  struct sembuf op;
+  op.sem_op = -1;
+  op.sem_num = 0;
+  op.sem_flg = SEM_UNDO;
+  semop(sd, &op, 1);
 
+  int shd = shmget(KEY, sizeof(int), 0600);
+  if (shd == -1) {
+    printf("Error getting shared mem: %s", strerror(errno));
+    return 1;
 
-int downSemaphore(int semval)
-{
-	printf("Checking if file available...\n");
-	struct sembuf cmdbuf;
-	cmdbuf.sem_num = 0;
-	cmdbuf.sem_flg = SEM_UNDO;
-	cmdbuf.sem_op = -1;
-	semop(semval,&cmdbuf,1);
-	printf("File is available!\n");
-	return 0;
-}
-int upSemaphore(int semval)
-{
-	struct sembuf cmdbuf;
-	cmdbuf.sem_num = 0;
-	cmdbuf.sem_flg = SEM_UNDO;
-	cmdbuf.sem_op = 1;
-	semop(semval,&cmdbuf,1);
-	return 0;
-}
+  }
 
+  int *len = shmat(shd, 0, 0);
 
-int main()
-{
-	readLastLine();
-	int semval = semget(KEY, 1, 0600);
-	if (semval<0)
-	{
-		printf("Something went wrong, maybe try creating a semaphore?\n");
-		return -1;
-	}
-	downSemaphore(semval);
+  int fd = open("story.txt", O_RDWR | O_APPEND, 0644);
+  if (fd == -1) {
+    printf("Error opening story: %s", strerror(errno));
+    return 1;
+  }
 
-	printf("Enter another line: ");
-	char* stringToAdd = malloc(256);
-	fgets(stringToAdd,256,stdin);
-	writeLastLine(stringToAdd);
+  int ret = lseek(fd, -(*len), SEEK_END);
+  if (ret == -1) {
+    printf("Error getting story position: %s", strerror(errno));
+    return 1;
+  }
 
-	upSemaphore(semval);
-	free(stringToAdd);
-	return 0;
+  char *line = (char *) malloc(*len + 1);
+  read(fd, line, *len);
+
+  printf("Previous contribution:\n");
+  printf("%s\n", line);
+  printf(">> ");
+
+  char input[128];
+  fgets(input, sizeof(input), stdin);
+
+  write(fd, input, strlen(input));
+  close(fd);
+
+  *len = strlen(input);
+  shmdt(len);
+
+  op.sem_op = 1;
+  semop(sd, &op, 1);
+
+  return 0;
 
 }
